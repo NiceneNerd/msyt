@@ -9,13 +9,16 @@ use std::{
 };
 
 use crate::{
-  Result,
-  model::{Msyt, Content},
+  model::{Content, Msyt},
   subcommand::find_files,
+  Result,
 };
 
 pub fn import(matches: &ArgMatches) -> Result<()> {
-  let input_paths: Vec<&str> = matches.values_of("paths").expect("required clap arg").collect();
+  let input_paths: Vec<&str> = matches
+    .values_of("paths")
+    .expect("required clap arg")
+    .collect();
   let paths: Vec<PathBuf> = if matches.is_present("dir_mode") {
     find_files(input_paths.iter().map(Clone::clone), "msyt")?
   } else {
@@ -23,14 +26,16 @@ pub fn import(matches: &ArgMatches) -> Result<()> {
   };
   let output_path = matches.value_of("output").map(Path::new);
 
-  let extension = matches.value_of("extension").expect("clap arg with default");
+  let extension = matches
+    .value_of("extension")
+    .expect("clap arg with default");
   let backup = !matches.is_present("no-backup");
 
   paths
     .into_par_iter()
     .map(|path| {
       let msyt_file = File::open(&path)?;
-      let msyt: Msyt = serde_yaml::from_reader(BufReader::new(msyt_file))?;
+      let msyt: Msyt = serde_json::from_reader(BufReader::new(msyt_file))?;
 
       let msbt_path = path.with_extension("msbt");
       let msbt_file = File::open(&msbt_path)?;
@@ -50,12 +55,19 @@ pub fn import(matches: &ArgMatches) -> Result<()> {
 
       let dest_path = match output_path {
         Some(output) => {
-          let stripped_path = match input_paths.iter().flat_map(|input| path.strip_prefix(input)).next() {
+          let stripped_path = match input_paths
+            .iter()
+            .flat_map(|input| path.strip_prefix(input))
+            .next()
+          {
             Some(s) => s,
-            None => failure::bail!("no input path works as a prefix on {}", path.to_string_lossy()),
+            None => failure::bail!(
+              "no input path works as a prefix on {}",
+              path.to_string_lossy()
+            ),
           };
           output.join(stripped_path).with_extension(extension)
-        },
+        }
         None => path.with_extension(extension),
       };
       if let Some(parent) = dest_path.parent() {

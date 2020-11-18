@@ -1,7 +1,7 @@
 use clap::ArgMatches;
 use failure::ResultExt;
 use indexmap::IndexMap;
-use msbt::{Msbt, section::Atr1};
+use msbt::{section::Atr1, Msbt};
 use rayon::prelude::*;
 
 use std::{
@@ -11,13 +11,16 @@ use std::{
 };
 
 use crate::{
-  Result,
-  model::{MsbtInfo, Msyt, Entry},
+  model::{Entry, MsbtInfo, Msyt},
   subcommand::find_files,
+  Result,
 };
 
 pub fn export(matches: &ArgMatches) -> Result<()> {
-  let input_paths: Vec<&str> = matches.values_of("paths").expect("required clap arg").collect();
+  let input_paths: Vec<&str> = matches
+    .values_of("paths")
+    .expect("required clap arg")
+    .collect();
   let paths: Vec<PathBuf> = if matches.is_present("dir_mode") {
     find_files(input_paths.iter().map(Clone::clone), "msbt")?
   } else {
@@ -28,7 +31,8 @@ pub fn export(matches: &ArgMatches) -> Result<()> {
   paths
     .into_par_iter()
     .map(|path| {
-      let msbt_file = File::open(&path).with_context(|_| format!("could not open {}", path.to_string_lossy()))?;
+      let msbt_file =
+        File::open(&path).with_context(|_| format!("could not open {}", path.to_string_lossy()))?;
       let msbt = Msbt::from_reader(BufReader::new(msbt_file))
         .with_context(|_| format!("could not read msbt file at {}", path.to_string_lossy()))?;
 
@@ -42,21 +46,28 @@ pub fn export(matches: &ArgMatches) -> Result<()> {
       for label in lbl1.labels() {
         let mut all_content = Vec::new();
 
-        let raw_value = label.value_raw()
-          .ok_or_else(|| failure::format_err!(
+        let raw_value = label.value_raw().ok_or_else(|| {
+          failure::format_err!(
             "invalid msbt at {}: missing string for label {}",
             path.to_string_lossy(),
             label.name(),
-          ))?;
-        let mut parts = crate::botw::parse_controls(msbt.header(), raw_value)
-          .with_context(|_| format!("could not parse control sequences in {}", path.to_string_lossy()))?;
+          )
+        })?;
+        let mut parts =
+          crate::botw::parse_controls(msbt.header(), raw_value).with_context(|_| {
+            format!(
+              "could not parse control sequences in {}",
+              path.to_string_lossy()
+            )
+          })?;
         all_content.append(&mut parts);
         let entry = Entry {
-          attributes: msbt.atr1()
-            .and_then(|a| a.strings()
+          attributes: msbt.atr1().and_then(|a| {
+            a.strings()
               .get(label.index() as usize)
               .map(|s| crate::util::strip_nul(*s))
-              .map(ToString::to_string)),
+              .map(ToString::to_string)
+          }),
           contents: all_content,
         };
         entries.insert(label.name().to_string(), entry);
@@ -80,25 +91,35 @@ pub fn export(matches: &ArgMatches) -> Result<()> {
 
       let dest = match output_path {
         Some(output) => {
-          let stripped_path = match input_paths.iter().flat_map(|input| path.strip_prefix(input)).next() {
+          let stripped_path = match input_paths
+            .iter()
+            .flat_map(|input| path.strip_prefix(input))
+            .next()
+          {
             Some(s) => s,
-            None => failure::bail!("no input path works as a prefix on {}", path.to_string_lossy()),
+            None => failure::bail!(
+              "no input path works as a prefix on {}",
+              path.to_string_lossy()
+            ),
           };
           output.join(stripped_path).with_extension("msyt")
-        },
+        }
         None => path.with_extension("msyt"),
       };
       if let Some(parent) = dest.parent() {
-        std::fs::create_dir_all(parent)
-          .with_context(|_| format!("could not create parent directories for {}", parent.to_string_lossy()))?;
+        std::fs::create_dir_all(parent).with_context(|_| {
+          format!(
+            "could not create parent directories for {}",
+            parent.to_string_lossy()
+          )
+        })?;
       }
       let mut writer = BufWriter::new(File::create(dest)?);
-      serde_yaml::to_writer(
-        &mut writer,
-        &msyt,
-      ).with_context(|_| "could not write yaml to file")?;
+      serde_json::to_writer(&mut writer, &msyt).with_context(|_| "could not write json to file")?;
       // add final newline
-      writer.write_all(b"\n").with_context(|_| "could not write final newline to file")?;
+      writer
+        .write_all(b"\n")
+        .with_context(|_| "could not write final newline to file")?;
 
       Ok(())
     })
