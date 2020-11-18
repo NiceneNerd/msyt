@@ -2,9 +2,9 @@
 
 mod botw;
 mod cli;
-mod model;
-mod subcommand;
-mod util;
+pub mod model;
+pub mod subcommand;
+pub mod util;
 
 pub type Result<T> = std::result::Result<T, failure::Error>;
 
@@ -20,7 +20,7 @@ fn main() {
         eprintln!("{}{}", indent_str, err);
       }
       1
-    },
+    }
   });
 }
 
