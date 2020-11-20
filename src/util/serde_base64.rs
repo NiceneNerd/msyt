@@ -5,18 +5,19 @@ use std::fmt::{self, Formatter};
 pub struct Base64Visitor;
 
 impl<'de> Visitor<'de> for Base64Visitor {
-  type Value = Vec<u8>;
+    type Value = Vec<u8>;
 
-  fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
-    formatter.write_str("a string")
-  }
+    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+        formatter.write_str("a string")
+    }
 
-  fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where E: de::Error,
-  {
-    base64::decode(v)
-      .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(v), &"valid base64"))
-  }
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        base64::decode(v)
+            .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(v), &"valid base64"))
+    }
 }
 
 // pub fn serialize<T, S>(data: &T, ser: S) -> Result<S::Ok, S::Error>

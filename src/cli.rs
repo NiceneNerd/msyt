@@ -1,7 +1,7 @@
 use clap::{App, AppSettings, Arg, SubCommand};
 
 pub fn app<'a, 'b: 'a>() -> App<'a, 'b> {
-  App::new(clap::crate_name!())
+    App::new(clap::crate_name!())
     .version(clap::crate_version!())
     .author(clap::crate_authors!())
     .about(clap::crate_description!())
