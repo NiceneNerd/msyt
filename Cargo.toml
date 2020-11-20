@@ -1,7 +1,7 @@
 [package]
 name = "msyt"
-version = "1.1.1"
-authors = ["Kyle Clemens <msyt@kyleclemens.com>"]
+version = "1.2.0"
+authors = ["Nicene Nerd <macadamiadaze@gmail.com>"]
 description = "Import and export from MSBT files to MSYT (YAML or JSON) files."
 edition = "2018"
 
@@ -20,7 +20,7 @@ clap = "2"
 failure = "0.1"
 glob = "0.3.0"
 indexmap = { version = "1", features = ["serde", "serde-1"] }
-msbt = { path = "../msbt-rs" }
+msbt = { git = "https://github.com/NiceneNerd/msbt-rs" }
 rayon = "1.5.0"
 serde = "1"
 serde_derive = "1"
