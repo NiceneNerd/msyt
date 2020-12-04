@@ -63,18 +63,28 @@ pub(crate) fn parse_controls(header: &Header, s: &[u8]) -> Result<Vec<Content>> 
             if u == 0x0e {
                 last_was_marker = true;
                 if let Some(text_index) = text_index {
-                    let bytes: Vec<u16> = s[text_index..i]
-                        .chunks(2)
-                        .map(|x| {
-                            header
-                                .endianness()
-                                .read_u16(x)
-                                .with_context(|_| "could not read bytes")
-                                .map_err(Into::into)
-                        })
-                        .collect::<Result<_>>()?;
-                    let string = String::from_utf16(&bytes)
-                        .with_context(|_| "could not parse utf-16 string")?;
+                    let mut string = match header.encoding() {
+                        msbt::Encoding::Utf16 => {
+                            let bytes: Vec<u16> = s[text_index..i]
+                                .chunks(2)
+                                .map(|x| {
+                                    header
+                                        .endianness()
+                                        .read_u16(x)
+                                        .with_context(|_| "could not read bytes")
+                                        .map_err(Into::into)
+                                })
+                                .collect::<Result<_>>()?;
+                            String::from_utf16(&bytes)
+                                .with_context(|_| "could not parse utf-16 string")?
+                        }
+                        msbt::Encoding::Utf8 => crate::util::strip_nul(
+                            std::str::from_utf8(&s[text_index..i])
+                                .with_context(|_| "could not parse utf-16 string")?,
+                        )
+                        .to_owned(),
+                    };
+                    string.retain(|c| c != '\u{0000}');
                     parts.push(Content::Text(string));
                 }
                 text_index = None;
@@ -85,22 +95,32 @@ pub(crate) fn parse_controls(header: &Header, s: &[u8]) -> Result<Vec<Content>> 
     }
 
     if let Some(text_index) = text_index {
-        let bytes: Vec<u16> = s[text_index..]
-            .chunks(2)
-            .map(|x| {
-                header
-                    .endianness()
-                    .read_u16(x)
-                    .with_context(|_| "could not read bytes")
-                    .map_err(Into::into)
-            })
-            .collect::<Result<_>>()?;
-        let from = if bytes[bytes.len() - 1] == 0 {
-            &bytes[..bytes.len() - 1]
-        } else {
-            &bytes
+        let mut string = match header.encoding() {
+            msbt::Encoding::Utf16 => {
+                let bytes: Vec<u16> = s[text_index..]
+                    .chunks(2)
+                    .map(|x| {
+                        header
+                            .endianness()
+                            .read_u16(x)
+                            .with_context(|_| "could not read bytes")
+                            .map_err(Into::into)
+                    })
+                    .collect::<Result<_>>()?;
+                let from = if bytes[bytes.len() - 1] == 0 {
+                    &bytes[..bytes.len() - 1]
+                } else {
+                    &bytes
+                };
+                String::from_utf16(&from).with_context(|_| "could not parse utf-16 string")?
+            }
+            msbt::Encoding::Utf8 => crate::util::strip_nul(
+                std::str::from_utf8(&s[text_index..])
+                    .with_context(|_| "could not parse utf-8 string")?,
+            )
+            .to_owned(),
         };
-        let string = String::from_utf16(&from).with_context(|_| "could not parse utf-16 string")?;
+        string.retain(|c| c != '\u{0000}');
         if !string.is_empty() {
             parts.push(Content::Text(string));
         }

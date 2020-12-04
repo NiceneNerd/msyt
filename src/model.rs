@@ -70,18 +70,25 @@ impl Content {
         for content in contents {
             match *content {
                 Content::Text(ref s) => {
-                    let mut inner_buf = [0; 2];
-                    let mut bytes: Vec<u8> = s
-                        .encode_utf16()
-                        .flat_map(|x| {
-                            header
-                                .endianness()
-                                .write_u16(&mut inner_buf[..], x)
-                                .expect("failed writing to array");
-                            inner_buf.to_vec()
-                        })
-                        .collect();
-                    buf.append(&mut bytes);
+                    match header.encoding() {
+                        Encoding::Utf16 => {
+                            let mut inner_buf = [0; 2];
+                            let mut bytes: Vec<u8> = s
+                                .encode_utf16()
+                                .flat_map(|x| {
+                                    header
+                                        .endianness()
+                                        .write_u16(&mut inner_buf[..], x)
+                                        .expect("failed writing to array");
+                                    inner_buf.to_vec()
+                                })
+                                .collect();
+                            buf.append(&mut bytes);
+                        }
+                        Encoding::Utf8 => {
+                            buf.append(&mut s.as_bytes().to_vec());
+                        }
+                    }
                 }
                 Content::Control(ref c) => c.write(header, &mut buf)?,
             }
@@ -201,6 +208,7 @@ impl Msyt {
 impl TryFrom<Pin<Box<Msbt>>> for Msyt {
     type Error = failure::Error;
     fn try_from(msbt: Pin<Box<Msbt>>) -> Result<Msyt> {
+        dbg!(msbt.header());
         let lbl1 = match msbt.lbl1() {
             Some(lbl) => lbl,
             None => failure::bail!("invalid msbt: missing lbl1"),
