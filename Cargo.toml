@@ -1,6 +1,6 @@
 [package]
 name = "msyt"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["Nicene Nerd <macadamiadaze@gmail.com>"]
 description = "Import and export from MSBT files to MSYT (YAML or JSON) files."
 edition = "2018"
