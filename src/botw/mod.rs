@@ -80,7 +80,7 @@ pub(crate) fn parse_controls(header: &Header, s: &[u8]) -> Result<Vec<Content>> 
                         }
                         msbt::Encoding::Utf8 => crate::util::strip_nul(
                             std::str::from_utf8(&s[text_index..i])
-                                .with_context(|_| "could not parse utf-16 string")?,
+                                .with_context(|_| "could not parse utf-8 string")?,
                         )
                         .to_owned(),
                     };
@@ -115,8 +115,12 @@ pub(crate) fn parse_controls(header: &Header, s: &[u8]) -> Result<Vec<Content>> 
                 String::from_utf16(&from).with_context(|_| "could not parse utf-16 string")?
             }
             msbt::Encoding::Utf8 => crate::util::strip_nul(
-                std::str::from_utf8(&s[text_index..])
-                    .with_context(|_| "could not parse utf-8 string")?,
+                std::str::from_utf8(&s[text_index..]).with_context(|_| {
+                    format!(
+                        "could not parse utf-8 string {}",
+                        String::from_utf8_lossy(&s[text_index..])
+                    )
+                })?,
             )
             .to_owned(),
         };
