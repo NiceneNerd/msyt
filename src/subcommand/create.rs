@@ -55,7 +55,7 @@ pub fn create(matches: &ArgMatches) -> Result<()> {
             let msyt_file = File::open(&path)
                 .with_context(|_| format!("could not open file {}", path.to_string_lossy()))?;
             let msyt: Msyt =
-                serde_yaml::from_reader(BufReader::new(msyt_file)).with_context(|_| {
+                serde_json::from_reader(BufReader::new(msyt_file)).with_context(|_| {
                     format!("could not read valid yaml from {}", path.to_string_lossy())
                 })?;
             let stripped_path = match input_paths

@@ -116,7 +116,7 @@ pub fn export(matches: &ArgMatches) -> Result<()> {
                 })?;
             }
             let mut writer = BufWriter::new(File::create(dest)?);
-            serde_yaml::to_writer(&mut writer, &msyt)
+            serde_json::to_writer(&mut writer, &msyt)
                 .with_context(|_| "could not write yaml to file")?;
             // add final newline
             writer

@@ -24,5 +24,5 @@ msbt = { git = "https://github.com/NiceneNerd/msbt-rs" }
 rayon = "1.5.0"
 serde = "1"
 serde_derive = "1"
-serde_yaml = "0.8.14"
+serde_json = "1.0.60"
 # walkdir = "2.3.1"

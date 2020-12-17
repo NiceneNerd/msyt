@@ -35,7 +35,7 @@ pub fn import(matches: &ArgMatches) -> Result<()> {
         .into_par_iter()
         .map(|path| {
             let msyt_file = File::open(&path)?;
-            let msyt: Msyt = serde_yaml::from_reader(BufReader::new(msyt_file))?;
+            let msyt: Msyt = serde_json::from_reader(BufReader::new(msyt_file))?;
 
             let msbt_path = path.with_extension("msbt");
             let msbt_file = File::open(&msbt_path)?;
