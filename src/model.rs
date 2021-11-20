@@ -18,12 +18,12 @@ use std::{
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 pub struct Msyt {
     #[serde(flatten)]
-    pub(crate) msbt: MsbtInfo,
-    pub(crate) entries: IndexMap<String, Entry>,
+    pub msbt: MsbtInfo,
+    pub entries: IndexMap<String, Entry>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub(crate) struct MsbtInfo {
+pub struct MsbtInfo {
     pub group_count: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub atr1_unknown: Option<u32>,
@@ -44,21 +44,21 @@ pub(crate) struct MsbtInfo {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub(crate) struct Entry {
+pub struct Entry {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub attributes: Option<String>,
     pub contents: Vec<Content>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-pub(crate) struct Nli1 {
+pub struct Nli1 {
     pub id_count: u32,
     pub global_ids: BTreeMap<u32, u32>,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
 #[serde(rename_all = "snake_case")]
-pub(crate) enum Content {
+pub enum Content {
     Text(String),
     Control(Control),
 }
