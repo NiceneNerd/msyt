@@ -4,7 +4,7 @@ use crate::{
     Result,
 };
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use byteordered::Endian;
 
@@ -29,11 +29,11 @@ impl SubControl for Control0_3 {
         let field_1 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_1")?;
+            .with_context(|| "could not read field_1")?;
         let field_2 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_2")?;
+            .with_context(|| "could not read field_2")?;
 
         if field_1 == 2 {
             if field_2 == 65535 {
@@ -53,11 +53,11 @@ impl SubControl for Control0_3 {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
         header
             .endianness()
             .write_u16(&mut writer, self.field_2)
-            .with_context(|_| "could not write field_2")?;
+            .with_context(|| "could not write field_2")?;
 
         Ok(())
     }

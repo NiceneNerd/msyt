@@ -6,7 +6,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -32,11 +32,11 @@ impl SubControl for Control1_8 {
         let len = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read length")?;
+            .with_context(|| "could not read length")?;
         let mut buf = vec![0; len as usize - 4];
         reader
             .read_exact(&mut buf)
-            .with_context(|_| "could not read bytes")?;
+            .with_context(|| "could not read bytes")?;
 
         let mut unknown_count = 0;
         for (i, unknown) in buf.chunks(4).map(|x| x == &UNKNOWN[..]).enumerate() {
@@ -56,12 +56,12 @@ impl SubControl for Control1_8 {
             .chunks(2)
             .map(|bs| header.endianness().read_u16(bs).map_err(Into::into))
             .collect::<Result<_>>()
-            .with_context(|_| "could not read u16s from field_1 bytes")?;
+            .with_context(|| "could not read u16s from field_1 bytes")?;
 
         let mut field_2 = [0; 4];
         reader
             .read_exact(&mut field_2[..])
-            .with_context(|_| "could not read field_2")?;
+            .with_context(|| "could not read field_2")?;
 
         Ok(Control::Raw(RawControl::One(Control1::Eight(Control1_8 {
             unknown_1,
@@ -76,24 +76,24 @@ impl SubControl for Control1_8 {
         header
             .endianness()
             .write_u16(&mut writer, len as u16)
-            .with_context(|_| "could not write length")?;
+            .with_context(|| "could not write length")?;
 
         for unknown in &self.unknown_1 {
             writer
                 .write_all(&unknown[..])
-                .with_context(|_| "could not write unknown bytes")?;
+                .with_context(|| "could not write unknown bytes")?;
         }
 
         for &byte in &self.field_1 {
             header
                 .endianness()
                 .write_u16(&mut writer, byte)
-                .with_context(|_| "could not write field_1 byte")?;
+                .with_context(|| "could not write field_1 byte")?;
         }
 
         writer
             .write_all(&self.field_2[..])
-            .with_context(|_| "could not write field_2")?;
+            .with_context(|| "could not write field_2")?;
 
         Ok(())
     }

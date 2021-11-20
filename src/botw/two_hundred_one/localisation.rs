@@ -4,7 +4,7 @@ use byteordered::Endian;
 
 use msbt::{Encoding, Header};
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -20,7 +20,7 @@ impl Control201Localisation {
         let len = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read len")? as usize;
+            .with_context(|| "could not read len")? as usize;
         let mut strings = Vec::with_capacity(2);
 
         let mut total = 0;
@@ -29,13 +29,13 @@ impl Control201Localisation {
                 Encoding::Utf16 => header
                     .endianness()
                     .read_u16(&mut reader)
-                    .with_context(|_| "could not read str_len")?
+                    .with_context(|| "could not read str_len")?
                     as usize,
                 Encoding::Utf8 => {
                     let mut buf = [0; 1];
                     reader
                         .read_exact(&mut buf)
-                        .with_context(|_| "could not read str_len")?;
+                        .with_context(|| "could not read str_len")?;
                     buf[0] as usize
                 }
             };
@@ -48,7 +48,7 @@ impl Control201Localisation {
             let mut str_bytes = vec![0; str_len];
             reader
                 .read_exact(&mut str_bytes)
-                .with_context(|_| "could not read string bytes")?;
+                .with_context(|| "could not read string bytes")?;
 
             let string = match header.encoding() {
                 Encoding::Utf16 => {
@@ -56,16 +56,16 @@ impl Control201Localisation {
                         .chunks(2)
                         .map(|bs| header.endianness().read_u16(bs).map_err(Into::into))
                         .collect::<Result<_>>()
-                        .with_context(|_| "could not read u16s from string bytes")?;
+                        .with_context(|| "could not read u16s from string bytes")?;
                     String::from_utf16(&utf16_str)
-                        .with_context(|_| "could not parse utf-16 string")?
+                        .with_context(|| "could not parse utf-16 string")?
                 }
                 Encoding::Utf8 => String::from_utf8(if str_bytes.ends_with(&[0]) {
                     str_bytes[..str_bytes.len() - 1].to_vec()
                 } else {
                     str_bytes
                 })
-                .with_context(|_| "could not parse utf-8 string")?,
+                .with_context(|| "could not parse utf-8 string")?,
             };
 
             strings.push(string);
@@ -91,7 +91,7 @@ impl Control201Localisation {
                         })
                         .collect()
                 }
-                Encoding::Utf8 => util::strip_nul(&s).as_bytes().to_vec(),
+                Encoding::Utf8 => util::strip_nul(s).as_bytes().to_vec(),
             };
 
             encoded_strs.push(str_bytes);
@@ -107,21 +107,21 @@ impl Control201Localisation {
         header
             .endianness()
             .write_u16(&mut writer, len as u16)
-            .with_context(|_| "could not write len")?;
+            .with_context(|| "could not write len")?;
 
         for s in encoded_strs {
             match header.encoding() {
                 Encoding::Utf16 => header
                     .endianness()
                     .write_u16(&mut writer, s.len() as u16)
-                    .with_context(|_| "could not write str_len")?,
+                    .with_context(|| "could not write str_len")?,
                 Encoding::Utf8 => writer
                     .write_all(&[s.len() as u8])
-                    .with_context(|_| "could not write str_len")?,
+                    .with_context(|| "could not write str_len")?,
             }
             writer
                 .write_all(&s)
-                .with_context(|_| "could not write string")?;
+                .with_context(|| "could not write string")?;
         }
 
         Ok(())

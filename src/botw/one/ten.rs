@@ -6,7 +6,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -30,16 +30,16 @@ impl SubControl for Control1_10 {
         let field_1 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_1")?;
+            .with_context(|| "could not read field_1")?;
         let field_2 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_2")?;
+            .with_context(|| "could not read field_2")?;
 
         let mut field_3 = [0; 2];
         reader
             .read_exact(&mut field_3[..])
-            .with_context(|_| "could not read field_3")?;
+            .with_context(|| "could not read field_3")?;
 
         if field_1 == 4 && field_3 == [1, 205] {
             return Ok(Control::SingleChoice { label: field_2 });
@@ -56,14 +56,14 @@ impl SubControl for Control1_10 {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
         header
             .endianness()
             .write_u16(&mut writer, self.field_2)
-            .with_context(|_| "could not write field_2")?;
+            .with_context(|| "could not write field_2")?;
         writer
             .write_all(&self.field_3[..])
-            .with_context(|_| "could not write field_3")?;
+            .with_context(|| "could not write field_3")?;
 
         Ok(())
     }

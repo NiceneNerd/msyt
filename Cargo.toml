@@ -14,10 +14,10 @@ name = "msyt"
 path = "src/lib.rs"
 
 [dependencies]
+anyhow = "1.0.47"
 base64 = "0.10"
 byteordered = "0.4.0"
 clap = "2"
-failure = "0.1"
 glob = "0.3.0"
 indexmap = { version = "1", features = ["serde", "serde-1"] }
 msbt = { git = "https://github.com/NiceneNerd/msbt-rs" }
@@ -25,4 +25,3 @@ rayon = "1.5.0"
 serde = "1"
 serde_derive = "1"
 serde_yaml = "0.8.14"
-# walkdir = "2.3.1"

@@ -5,7 +5,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -27,11 +27,11 @@ impl SubControl for Control4_1 {
         let field_1_len = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_1 length")?;
+            .with_context(|| "could not read field_1 length")?;
         let mut field_1 = vec![0; field_1_len as usize];
         reader
             .read_exact(&mut field_1)
-            .with_context(|_| "could not read field_1")?;
+            .with_context(|| "could not read field_1")?;
 
         Ok(Control::Sound2 { unknown: field_1 })
     }
@@ -40,10 +40,10 @@ impl SubControl for Control4_1 {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1.len() as u16)
-            .with_context(|_| "could not write field_1 length")?;
+            .with_context(|| "could not write field_1 length")?;
         writer
             .write_all(&self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
 
         Ok(())
     }

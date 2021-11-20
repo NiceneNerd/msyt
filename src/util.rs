@@ -2,8 +2,8 @@ pub mod option_serde_base64;
 pub mod serde_base64;
 
 pub fn strip_nul(s: &str) -> &str {
-    if s.ends_with('\u{0000}') {
-        &s[..s.len() - 1]
+    if let Some(s) = s.strip_suffix('\u{0000}') {
+        s
     } else {
         s
     }

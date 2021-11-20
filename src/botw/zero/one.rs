@@ -6,7 +6,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -29,11 +29,11 @@ impl SubControl for Control0_1 {
         let field_1 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_1")?;
+            .with_context(|| "could not read field_1")?;
         let field_2 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_2")?;
+            .with_context(|| "could not read field_2")?;
 
         if field_1 == 2 {
             if let Some(font_kind) = Font::from_u16(field_2) {
@@ -51,11 +51,11 @@ impl SubControl for Control0_1 {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
         header
             .endianness()
             .write_u16(&mut writer, self.field_2)
-            .with_context(|_| "could not write field_2")?;
+            .with_context(|| "could not write field_2")?;
 
         Ok(())
     }

@@ -6,7 +6,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -29,11 +29,11 @@ impl SubControl for Control0_2 {
         let field_1 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_1")?;
+            .with_context(|| "could not read field_1")?;
         let field_2 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_2")?;
+            .with_context(|| "could not read field_2")?;
 
         if field_1 == 2 {
             return Ok(Control::TextSize { percent: field_2 });
@@ -49,11 +49,11 @@ impl SubControl for Control0_2 {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
         header
             .endianness()
             .write_u16(&mut writer, self.field_2)
-            .with_context(|_| "could not write field_2")?;
+            .with_context(|| "could not write field_2")?;
 
         Ok(())
     }

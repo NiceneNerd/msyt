@@ -1,7 +1,7 @@
-use crate::{botw::Control, util, Result};
+use crate::{botw::Control, Result};
 
+use anyhow::Context;
 use byteordered::{Endian, Endianness};
-use failure::ResultExt;
 use indexmap::IndexMap;
 use msbt::{builder::MsbtBuilder, section::Atr1, Encoding, Header, Msbt};
 use serde_derive::{Deserialize, Serialize};
@@ -100,6 +100,7 @@ impl Content {
     }
 }
 
+#[allow(dead_code)]
 impl Msyt {
     pub fn write_as_msbt<W: std::io::Write>(
         self,
@@ -117,7 +118,7 @@ impl Msyt {
     ) -> Result<()> {
         let msbt = self.try_into_msbt_with_encoding(encoding, endianness)?;
         msbt.write_to(BufWriter::new(writer))
-            .with_context(|_| "could not write msbt to {}")?;
+            .with_context(|| "could not write msbt to {}")?;
         Ok(())
     }
 
@@ -204,11 +205,11 @@ impl Msyt {
 }
 
 impl TryFrom<Pin<Box<Msbt>>> for Msyt {
-    type Error = failure::Error;
+    type Error = anyhow::Error;
     fn try_from(msbt: Pin<Box<Msbt>>) -> Result<Msyt> {
         let lbl1 = match msbt.lbl1() {
             Some(lbl) => lbl,
-            None => failure::bail!("invalid msbt: missing lbl1"),
+            None => anyhow::bail!("invalid msbt: missing lbl1"),
         };
 
         let mut entries = IndexMap::with_capacity(lbl1.labels().len());
@@ -217,10 +218,10 @@ impl TryFrom<Pin<Box<Msbt>>> for Msyt {
             let mut all_content = Vec::new();
 
             let raw_value = label.value_raw().ok_or_else(|| {
-                failure::format_err!("invalid msbt: missing string for label {}", label.name(),)
+                anyhow::format_err!("invalid msbt: missing string for label {}", label.name(),)
             })?;
             let mut parts = crate::botw::parse_controls(msbt.header(), raw_value)
-                .with_context(|_| "could not parse control sequences")?;
+                .with_context(|| "could not parse control sequences")?;
             all_content.append(&mut parts);
             let entry = Entry {
                 attributes: msbt.atr1().and_then(|a| {

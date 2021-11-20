@@ -6,7 +6,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -29,12 +29,12 @@ impl SubControl for Control1_7 {
         let field_1 = header
             .endianness()
             .read_u16(&mut reader)
-            .with_context(|_| "could not read field_1")?;
+            .with_context(|| "could not read field_1")?;
 
         let mut field_2 = [0; 2];
         reader
             .read_exact(&mut field_2)
-            .with_context(|_| "could not read field_2")?;
+            .with_context(|| "could not read field_2")?;
 
         if field_1 == 2 && field_2[1] == 205 {
             let icon = Icon::from_u8(field_2[0]);
@@ -51,10 +51,10 @@ impl SubControl for Control1_7 {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
         writer
             .write_all(&self.field_2[..])
-            .with_context(|_| "could not write field_2")?;
+            .with_context(|| "could not write field_2")?;
 
         Ok(())
     }

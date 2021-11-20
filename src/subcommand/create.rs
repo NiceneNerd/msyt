@@ -1,7 +1,7 @@
+use anyhow::Context;
 use byteordered::Endianness;
 use clap::ArgMatches;
-use failure::ResultExt;
-use msbt::{builder::MsbtBuilder, Encoding};
+use msbt::Encoding;
 use rayon::prelude::*;
 
 use std::{
@@ -10,11 +10,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{
-    model::{Content, Msyt},
-    subcommand::find_files,
-    Result,
-};
+use crate::{model::Msyt, subcommand::find_files, Result};
 
 pub fn create(matches: &ArgMatches) -> Result<()> {
     let input_paths: Vec<&str> = matches
@@ -44,18 +40,18 @@ pub fn create(matches: &ArgMatches) -> Result<()> {
     let output = Path::new(matches.value_of("output").expect("required clap arg"));
     if !output.exists() {
         std::fs::create_dir_all(&output)
-            .with_context(|_| format!("could not create dir {}", output.to_string_lossy()))?;
+            .with_context(|| format!("could not create dir {}", output.to_string_lossy()))?;
     } else if !output.is_dir() {
-        failure::bail!("output directory is not a directory");
+        anyhow::anyhow!("output directory is not a directory");
     }
 
     paths
         .into_par_iter()
         .map(|path| {
             let msyt_file = File::open(&path)
-                .with_context(|_| format!("could not open file {}", path.to_string_lossy()))?;
+                .with_context(|| format!("could not open file {}", path.to_string_lossy()))?;
             let msyt: Msyt =
-                serde_yaml::from_reader(BufReader::new(msyt_file)).with_context(|_| {
+                serde_yaml::from_reader(BufReader::new(msyt_file)).with_context(|| {
                     format!("could not read valid yaml from {}", path.to_string_lossy())
                 })?;
             let stripped_path = match input_paths
@@ -64,21 +60,23 @@ pub fn create(matches: &ArgMatches) -> Result<()> {
                 .next()
             {
                 Some(s) => s,
-                None => failure::bail!(
-                    "no input path works as a prefix on {}",
-                    path.to_string_lossy()
-                ),
+                None => {
+                    return Err(anyhow::anyhow!(
+                        "no input path works as a prefix on {}",
+                        path.to_string_lossy()
+                    ))
+                }
             };
             let dest_path = output.join(stripped_path).with_extension(extension);
             if let Some(parent) = dest_path.parent() {
-                std::fs::create_dir_all(parent).with_context(|_| {
+                std::fs::create_dir_all(parent).with_context(|| {
                     format!("could not create directory {}", parent.to_string_lossy())
                 })?;
             }
 
             if backup && dest_path.exists() {
                 let backup_path = dest_path.with_extension(format!("{}.bak", extension));
-                std::fs::rename(&dest_path, &backup_path).with_context(|_| {
+                std::fs::rename(&dest_path, &backup_path).with_context(|| {
                     format!(
                         "could not backup {} to {}",
                         dest_path.to_string_lossy(),
@@ -87,11 +85,11 @@ pub fn create(matches: &ArgMatches) -> Result<()> {
                 })?;
             }
 
-            let new_msbt = File::create(&dest_path).with_context(|_| {
+            let new_msbt = File::create(&dest_path).with_context(|| {
                 format!("could not create file {}", dest_path.to_string_lossy())
             })?;
             msyt.write_as_msbt_with_encoding(&mut BufWriter::new(new_msbt), encoding, endianness)
-                .with_context(|_| {
+                .with_context(|| {
                     format!("could not write msbt to {}", dest_path.to_string_lossy())
                 })?;
 

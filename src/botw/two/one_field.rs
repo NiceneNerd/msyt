@@ -2,7 +2,7 @@ use crate::Result;
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -21,7 +21,7 @@ impl Control2OneField {
             field_1: header
                 .endianness()
                 .read_u16(&mut reader)
-                .with_context(|_| "could not read field_1")?,
+                .with_context(|| "could not read field_1")?,
         })
     }
 
@@ -29,7 +29,7 @@ impl Control2OneField {
         header
             .endianness()
             .write_u16(&mut writer, self.field_1)
-            .with_context(|_| "could not write field_1")?;
+            .with_context(|| "could not write field_1")?;
 
         Ok(())
     }

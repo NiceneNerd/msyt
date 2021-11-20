@@ -5,7 +5,7 @@ use crate::{
 
 use byteordered::Endian;
 
-use failure::ResultExt;
+use anyhow::Context;
 
 use msbt::Header;
 
@@ -45,16 +45,16 @@ impl MainControl for Control0 {
         let kind = header.endianness().read_u16(&mut c)?;
         let control = match kind {
             0 => Control0_0::parse(header, &mut c)
-                .with_context(|_| "could not parse control subtype 0")?,
+                .with_context(|| "could not parse control subtype 0")?,
             1 => Control0_1::parse(header, &mut c)
-                .with_context(|_| "could not parse control subtype 1")?,
+                .with_context(|| "could not parse control subtype 1")?,
             2 => Control0_2::parse(header, &mut c)
-                .with_context(|_| "could not parse control subtype 2")?,
+                .with_context(|| "could not parse control subtype 2")?,
             3 => Control0_3::parse(header, &mut c)
-                .with_context(|_| "could not parse control subtype 3")?,
+                .with_context(|| "could not parse control subtype 3")?,
             4 => Control0_4::parse(header, &mut c)
-                .with_context(|_| "could not parse control subtype 4")?,
-            x => failure::bail!("unknown control 0 type: {}", x),
+                .with_context(|| "could not parse control subtype 4")?,
+            x => anyhow::bail!("unknown control 0 type: {}", x),
         };
 
         Ok((c.position() as usize, control))
@@ -72,9 +72,9 @@ impl MainControl for Control0 {
         header
             .endianness()
             .write_u16(&mut writer, sub.marker())
-            .with_context(|_| format!("could not write control subtype marker {}", sub.marker()))?;
+            .with_context(|| format!("could not write control subtype marker {}", sub.marker()))?;
         sub.write(header, &mut writer)
-            .with_context(|_| format!("could not write control subtype {}", sub.marker()))
+            .with_context(|| format!("could not write control subtype {}", sub.marker()))
             .map_err(Into::into)
     }
 }
