@@ -16,19 +16,19 @@ pub struct Control2OneField {
 }
 
 impl Control2OneField {
-    pub(crate) fn parse(header: &Header, mut reader: &mut Cursor<&[u8]>) -> Result<Self> {
+    pub(crate) fn parse(header: &Header, reader: &mut Cursor<&[u8]>) -> Result<Self> {
         Ok(Control2OneField {
             field_1: header
                 .endianness()
-                .read_u16(&mut reader)
+                .read_u16(reader)
                 .with_context(|| "could not read field_1")?,
         })
     }
 
-    pub(crate) fn write(&self, header: &Header, mut writer: &mut dyn Write) -> Result<()> {
+    pub(crate) fn write(&self, header: &Header, writer: &mut dyn Write) -> Result<()> {
         header
             .endianness()
-            .write_u16(&mut writer, self.field_1)
+            .write_u16(writer, self.field_1)
             .with_context(|| "could not write field_1")?;
 
         Ok(())

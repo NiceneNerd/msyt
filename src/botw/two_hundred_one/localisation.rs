@@ -39,7 +39,7 @@ impl Control201Localisation {
                     buf[0] as usize
                 }
             };
-            total += str_len as usize + 2;
+            total += str_len + 2;
             if str_len == 0 {
                 strings.push(Default::default());
                 continue;

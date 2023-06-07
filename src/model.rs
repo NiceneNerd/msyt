@@ -227,7 +227,7 @@ impl TryFrom<Pin<Box<Msbt>>> for Msyt {
                 attributes: msbt.atr1().and_then(|a| {
                     a.strings()
                         .get(label.index() as usize)
-                        .map(|s| crate::util::strip_nul(*s))
+                        .map(|s| crate::util::strip_nul(s))
                         .map(ToString::to_string)
                 }),
                 contents: all_content,

@@ -47,7 +47,7 @@ pub fn import(matches: &ArgMatches) -> Result<()> {
                 if let Some(ref mut lbl1) = msbt.lbl1_mut() {
                     if let Some(label) = lbl1.labels_mut().iter_mut().find(|x| x.name() == key) {
                         if let Err(()) = label.set_value_raw(new_val) {
-                            anyhow::anyhow!("could not set raw string at index {}", label.index());
+                            anyhow::bail!("could not set raw string at index {}", label.index());
                         }
                     }
                 }

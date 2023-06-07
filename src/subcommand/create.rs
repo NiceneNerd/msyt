@@ -39,10 +39,10 @@ pub fn create(matches: &ArgMatches) -> Result<()> {
     let backup = !matches.is_present("no-backup");
     let output = Path::new(matches.value_of("output").expect("required clap arg"));
     if !output.exists() {
-        std::fs::create_dir_all(&output)
+        std::fs::create_dir_all(output)
             .with_context(|| format!("could not create dir {}", output.to_string_lossy()))?;
     } else if !output.is_dir() {
-        anyhow::anyhow!("output directory is not a directory");
+        anyhow::bail!("output directory is not a directory");
     }
 
     paths

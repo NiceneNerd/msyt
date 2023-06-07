@@ -57,7 +57,7 @@ pub(crate) fn parse_controls(header: &Header, s: &[u8]) -> Result<Vec<Content>> 
                 };
                 let (read, ctl) = match do_read() {
                     Ok((read, ctl)) => (read, ctl),
-                    Err(e) => (
+                    Err(_e) => (
                         body.len(),
                         Control::Bin {
                             bytes: body.to_vec(),
