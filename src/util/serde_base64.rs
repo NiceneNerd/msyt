@@ -1,4 +1,7 @@
-use serde::de::{self, Visitor};
+use serde::{
+    de::{self, Visitor},
+    Deserializer, Serializer,
+};
 
 use std::fmt::{self, Formatter};
 
@@ -20,15 +23,17 @@ impl<'de> Visitor<'de> for Base64Visitor {
     }
 }
 
-// pub fn serialize<T, S>(data: &T, ser: S) -> Result<S::Ok, S::Error>
-//   where S: Serializer,
-//         T: AsRef<[u8]> + ?Sized,
-// {
-//   ser.serialize_str(&base64::encode(data))
-// }
+pub fn serialize<T, S>(data: &T, ser: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: AsRef<[u8]> + ?Sized,
+{
+    ser.serialize_str(&base64::encode(data))
+}
 
-// pub fn deserialize<'de, D>(des: D) -> Result<Vec<u8>, D::Error>
-//   where D: Deserializer<'de>,
-// {
-//   des.deserialize_string(Base64Visitor)
-// }
+pub fn deserialize<'de, D>(des: D) -> Result<Vec<u8>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    des.deserialize_string(Base64Visitor)
+}

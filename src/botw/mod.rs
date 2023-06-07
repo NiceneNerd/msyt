@@ -36,22 +36,33 @@ pub(crate) fn parse_controls(header: &Header, s: &[u8]) -> Result<Vec<Content>> 
             skip += 1;
             if last_was_marker {
                 let body = &s[i + 2..];
-                let (read, ctl) = match u {
-                    0x00 => self::zero::Control0::parse(header, body)
-                        .with_context(|| "could not parse control sequence 0")?,
-                    0x01 => self::one::Control1::parse(header, body)
-                        .with_context(|| "could not parse control sequence 1")?,
-                    0x02 => self::two::Control2::parse(header, body)
-                        .with_context(|| "could not parse control sequence 2")?,
-                    0x03 => self::three::Control3::parse(header, body)
-                        .with_context(|| "could not parse control sequence 3")?,
-                    0x04 => self::four::Control4::parse(header, body)
-                        .with_context(|| "could not parse control sequence 4")?,
-                    0x05 => self::five::Control5::parse(header, body)
-                        .with_context(|| "could not parse control sequence 5")?,
-                    0xc9 => self::two_hundred_one::Control201::parse(header, body)
-                        .with_context(|| "could not parse control sequence 201")?,
-                    x => anyhow::bail!("unknown control sequence: {}", x),
+                let do_read = || -> Result<(usize, Control)> {
+                    match u {
+                        0x00 => self::zero::Control0::parse(header, body)
+                            .with_context(|| "could not parse control sequence 0"),
+                        0x01 => self::one::Control1::parse(header, body)
+                            .with_context(|| "could not parse control sequence 1"),
+                        0x02 => self::two::Control2::parse(header, body)
+                            .with_context(|| "could not parse control sequence 2"),
+                        0x03 => self::three::Control3::parse(header, body)
+                            .with_context(|| "could not parse control sequence 3"),
+                        0x04 => self::four::Control4::parse(header, body)
+                            .with_context(|| "could not parse control sequence 4"),
+                        0x05 => self::five::Control5::parse(header, body)
+                            .with_context(|| "could not parse control sequence 5"),
+                        0xc9 => self::two_hundred_one::Control201::parse(header, body)
+                            .with_context(|| "could not parse control sequence 201"),
+                        _ => anyhow::bail!("could not parse unknown control sequence"),
+                    }
+                };
+                let (read, ctl) = match do_read() {
+                    Ok((read, ctl)) => (read, ctl),
+                    Err(e) => (
+                        body.len(),
+                        Control::Bin {
+                            bytes: body.to_vec(),
+                        },
+                    ),
                 };
                 let part = Content::Control(ctl);
                 skip = read + 1;
@@ -181,6 +192,32 @@ pub enum Control {
     Font {
         font_kind: Font,
     },
+    Bin {
+        #[serde(with = "crate::util::serde_base64")]
+        bytes: Vec<u8>,
+    },
+}
+
+impl MainControl for Vec<u8> {
+    fn marker(&self) -> u16 {
+        u16::from_le_bytes([self[0], self[1]])
+    }
+
+    fn parse(_header: &Header, buf: &[u8]) -> Result<(usize, Control)>
+    where
+        Self: Sized,
+    {
+        Ok((
+            buf.len(),
+            Control::Bin {
+                bytes: buf.to_vec(),
+            },
+        ))
+    }
+
+    fn write(&self, _header: &Header, writer: &mut dyn Write) -> Result<()> {
+        Ok(writer.write_all(&self[..self.len() - 2])?)
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq)]
@@ -267,6 +304,9 @@ impl Control {
     fn as_main_control(&self) -> Result<MainControlRef> {
         let b: Box<dyn MainControl> = match *self {
             Control::Raw(ref raw) => return Ok(MainControlRef::Borrowed(raw.as_main_control())),
+            Control::Bin { ref bytes } => {
+                return Ok(MainControlRef::Borrowed(bytes as &dyn MainControl))
+            }
 
             Control::SetColour { colour } => {
                 Box::new(self::zero::Control0::Three(self::zero::three::Control0_3 {
@@ -418,7 +458,7 @@ impl Control {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "snake_case", tag = "type")]
 pub enum RawControl {
     Zero(self::zero::Control0),
     One(self::one::Control1),

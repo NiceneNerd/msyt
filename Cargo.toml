@@ -1,6 +1,6 @@
 [package]
 name = "msyt"
-version = "1.2.1"
+version = "1.3.0"
 authors = ["Nicene Nerd <macadamiadaze@gmail.com>"]
 description = "Import and export from MSBT files to YAML or JSON files."
 edition = "2018"
@@ -24,4 +24,4 @@ msbt = { git = "https://github.com/NiceneNerd/msbt-rs" }
 rayon = "1.5.0"
 serde = "1"
 serde_derive = "1"
-serde_yaml = "0.8.14"
+serde_yaml = "0.9.17"
