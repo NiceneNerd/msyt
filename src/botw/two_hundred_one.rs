@@ -44,12 +44,12 @@ impl MainControl for Control201 {
                 Control201Dynamic::parse(header, &mut c)
                     .with_context(|| "could not parse control subtype dynamic")?,
             ),
-            1 | 2 | 3 | 4 => Control201::OneField(
+            1..=4 => Control201::OneField(
                 kind,
                 Control201OneField::parse(header, &mut c)
                     .with_context(|| "could not parse control two fields")?,
             ),
-            5 | 6 | 7 | 8 => {
+            5..=8 => {
                 let localisation_kind = Localisation::from_u16(kind);
                 let sub = Control201Localisation::parse(header, &mut c)
                     .with_context(|| "could not parse control subtype localisation")?;
