@@ -1,3 +1,4 @@
+use anyhow::Context;
 use clap::ArgMatches;
 use msbt::Msbt;
 use rayon::prelude::*;
@@ -16,26 +17,31 @@ use crate::{
 
 pub fn import(matches: &ArgMatches) -> Result<()> {
     let input_paths: Vec<&str> = matches
-        .values_of("paths")
+        .get_many::<String>("paths")
         .expect("required clap arg")
+        .map(|s| s.as_ref())
         .collect();
-    let paths: Vec<PathBuf> = if matches.is_present("dir_mode") {
+    let paths: Vec<PathBuf> = if matches.get_flag("dir_mode") {
         find_files(input_paths.iter().map(Clone::clone), "msyt")?
     } else {
         input_paths.iter().map(PathBuf::from).collect()
     };
-    let output_path = matches.value_of("output").map(Path::new);
+    let output_path = matches.get_one::<String>("output").map(Path::new);
 
     let extension = matches
-        .value_of("extension")
+        .get_one::<String>("extension")
         .expect("clap arg with default");
-    let backup = !matches.is_present("no-backup");
+    let backup = !matches.get_flag("no-backup");
 
     paths
         .into_par_iter()
         .map(|path| {
             let msyt_file = File::open(&path)?;
-            let msyt: Msyt = serde_yaml::from_reader(BufReader::new(msyt_file))?;
+            let msyt: Msyt = serde_yaml::from_reader(BufReader::new(msyt_file)).or_else(|e| {
+                let msyt_file = File::open(&path)?;
+                let de = serde_yaml::Deserializer::from_reader(BufReader::new(msyt_file));
+                serde_yaml::with::singleton_map_recursive::deserialize(de).context(e)
+            })?;
 
             let msbt_path = path.with_extension("msbt");
             let msbt_file = File::open(&msbt_path)?;

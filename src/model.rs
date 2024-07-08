@@ -57,7 +57,7 @@ pub struct Nli1 {
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Clone)]
-#[serde(rename_all = "snake_case", untagged)]
+#[serde(rename_all = "snake_case")]
 pub enum Content {
     Text(String),
     Control(Control),

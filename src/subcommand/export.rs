@@ -18,15 +18,16 @@ use crate::{
 
 pub fn export(matches: &ArgMatches) -> Result<()> {
     let input_paths: Vec<&str> = matches
-        .values_of("paths")
+        .get_many::<String>("paths")
         .expect("required clap arg")
+        .map(|s| s.as_ref())
         .collect();
-    let paths: Vec<PathBuf> = if matches.is_present("dir_mode") {
+    let paths: Vec<PathBuf> = if matches.get_flag("dir_mode") {
         find_files(input_paths.iter().map(Clone::clone), "msbt")?
     } else {
         input_paths.iter().map(PathBuf::from).collect()
     };
-    let output_path = matches.value_of("output").map(Path::new);
+    let output_path = matches.get_one::<String>("output").map(Path::new);
 
     paths
         .into_par_iter()

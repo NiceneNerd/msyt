@@ -1,3 +1,4 @@
+use base64::Engine;
 use serde::{
     de::{self, Visitor},
     Deserializer, Serializer,
@@ -18,7 +19,8 @@ impl<'de> Visitor<'de> for Base64Visitor {
     where
         E: de::Error,
     {
-        base64::decode(v)
+        base64::prelude::BASE64_STANDARD
+            .decode(v)
             .map_err(|_| de::Error::invalid_value(de::Unexpected::Str(v), &"valid base64"))
     }
 }
@@ -28,7 +30,7 @@ where
     S: Serializer,
     T: AsRef<[u8]> + ?Sized,
 {
-    ser.serialize_str(&base64::encode(data))
+    ser.serialize_str(&base64::prelude::BASE64_STANDARD.encode(data))
 }
 
 pub fn deserialize<'de, D>(des: D) -> Result<Vec<u8>, D::Error>

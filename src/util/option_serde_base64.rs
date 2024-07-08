@@ -1,3 +1,4 @@
+use base64::Engine;
 use serde::de::{self, Deserializer, Visitor};
 use serde::ser::Serializer;
 
@@ -34,7 +35,7 @@ where
     T: AsRef<[u8]>,
 {
     match *data {
-        Some(ref data) => ser.serialize_some(&base64::encode(data)),
+        Some(ref data) => ser.serialize_some(&base64::prelude::BASE64_STANDARD.encode(data)),
         None => ser.serialize_none(),
     }
 }

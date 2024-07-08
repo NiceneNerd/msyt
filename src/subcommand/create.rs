@@ -14,30 +14,43 @@ use crate::{model::Msyt, subcommand::find_files, Result};
 
 pub fn create(matches: &ArgMatches) -> Result<()> {
     let input_paths: Vec<&str> = matches
-        .values_of("paths")
+        .get_many::<String>("paths")
         .expect("required clap arg")
+        .map(|s| s.as_ref())
         .collect();
-    let paths: Vec<PathBuf> = if matches.is_present("dir_mode") {
+    let paths: Vec<PathBuf> = if matches.get_flag("dir_mode") {
         find_files(input_paths.iter().cloned(), "msyt")?
     } else {
         input_paths.iter().map(PathBuf::from).collect()
     };
 
-    let endianness = match matches.value_of("platform").expect("required clap arg") {
+    let endianness = match matches
+        .get_one::<String>("platform")
+        .expect("required clap arg")
+        .as_ref()
+    {
         "switch" => Endianness::Little,
         "wiiu" => Endianness::Big,
         _ => unreachable!("clap arg with possible values"),
     };
-    let encoding = match matches.value_of("encoding").expect("clap arg with default") {
+    let encoding = match matches
+        .get_one::<String>("encoding")
+        .expect("clap arg with default")
+        .as_ref()
+    {
         "utf16" => Encoding::Utf16,
         "utf8" => Encoding::Utf8,
         _ => unreachable!("clap arg with possible values"),
     };
     let extension = matches
-        .value_of("extension")
+        .get_one::<String>("extension")
         .expect("clap arg with default");
-    let backup = !matches.is_present("no-backup");
-    let output = Path::new(matches.value_of("output").expect("required clap arg"));
+    let backup = !matches.get_flag("no-backup");
+    let output = Path::new(
+        matches
+            .get_one::<String>("output")
+            .expect("required clap arg"),
+    );
     if !output.exists() {
         std::fs::create_dir_all(output)
             .with_context(|| format!("could not create dir {}", output.to_string_lossy()))?;

@@ -8,20 +8,24 @@ edition = "2018"
 [[bin]]
 name = "msyt"
 path = "src/bin.rs"
+required-features = ["cli"]
 
 [lib]
 name = "msyt"
 path = "src/lib.rs"
 
 [dependencies]
-anyhow = "1.0.47"
-base64 = "0.10"
+anyhow = "1.0"
+base64 = "0.22.1"
 byteordered = "0.4.0"
-clap = "2"
-glob = "0.3.0"
-indexmap = { version = "1", features = ["serde", "serde-1"] }
+clap = { version = "4.5", features = ["cargo"], optional = true }
+glob = "0.3.1"
+indexmap = { version = "2.2", features = ["serde"] }
 msbt = { git = "https://github.com/NiceneNerd/msbt-rs" }
-rayon = "1.5.0"
+rayon = { version = "1.10", optional = true }
 serde = "1"
 serde_derive = "1"
 serde_yaml = "0.9.17"
+
+[features]
+cli = ["clap", "rayon"]
