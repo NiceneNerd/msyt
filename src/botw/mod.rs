@@ -458,7 +458,7 @@ impl Control {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq)]
-#[serde(rename_all = "snake_case", tag = "type")]
+#[serde(rename_all = "snake_case")]
 pub enum RawControl {
     Zero(self::zero::Control0),
     One(self::one::Control1),
