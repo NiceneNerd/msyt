@@ -251,6 +251,8 @@ impl Font {
 pub enum Localisation {
     Gender,
     Plural,
+    KoreanNominativePostposition,
+    KoreanObjectivePostposition,
     Unknown(u16),
 }
 
@@ -259,6 +261,8 @@ impl Localisation {
         match self {
             Localisation::Gender => 5,
             Localisation::Plural => 6,
+            Localisation::KoreanNominativePostposition => 7,
+            Localisation::KoreanObjectivePostposition => 8,
             Localisation::Unknown(x) => x,
         }
     }
@@ -267,6 +271,8 @@ impl Localisation {
         match u {
             5 => Localisation::Gender,
             6 => Localisation::Plural,
+            7 => Localisation::KoreanNominativePostposition,
+            8 => Localisation::KoreanObjectivePostposition,
             x => Localisation::Unknown(x),
         }
     }
